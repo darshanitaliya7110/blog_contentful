@@ -18,6 +18,9 @@ const BlogList = () => {
                             items {
                             _id
                             title
+                            verified
+                            description
+                            date
                             image{
                                 title
                                 url
@@ -31,7 +34,11 @@ const BlogList = () => {
                                 url
                                 }
                             }
-                            date
+                            companyCollection{
+                                items{
+                                companyName
+                                }
+                            }
                             }
                         }
                     }`;
@@ -55,20 +62,28 @@ const BlogList = () => {
     }, [getData])
 
 
-
     return (
         <div>
             {blogData?.map((item) =>
                 <div key={item._id}>
                     <h1>{item.title}</h1>
+                    <p>{item.verified ? "verified" : "unverified"}</p>
+                    <p>{item.description}</p>
                     <img src={item.image.url} alt={item.image.title} />
                     <div>{documentToReactComponents(item.body.json)}</div>
                     <span><p><img style={{ width: "30px", height: "30px" }} src={item.author.authorImage.url} alt={item.author.authorName} /> {item.author.authorName}</p></span>
                     <br />
                     <p>{formatDate(item.date)}</p>
+                    {
+                        item.companyCollection.items.map((item) => <div key={item.companyName}>
+                            {item.companyName}
+                        </div>)
+                    }
+                    <hr />
                 </div>
-            )}
-        </div>
+            )
+            }
+        </div >
     )
 }
 
