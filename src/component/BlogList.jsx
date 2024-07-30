@@ -3,6 +3,8 @@
 import axios from 'axios';
 import { documentToReactComponents } from '@contentful/rich-text-react-renderer';
 import React, { useCallback, useEffect, useState } from 'react'
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 const BlogList = () => {
 
@@ -36,6 +38,9 @@ const BlogList = () => {
                             }
                             companyCollection{
                                 items{
+                                sys{
+                                id
+                                }
                                 companyName
                                 }
                             }
@@ -74,11 +79,13 @@ const BlogList = () => {
                     <span><p><img style={{ width: "30px", height: "30px" }} src={item.author.authorImage.url} alt={item.author.authorName} /> {item.author.authorName}</p></span>
                     <br />
                     <p>{formatDate(item.date)}</p>
-                    {
-                        item.companyCollection.items.map((item) => <div key={item.companyName}>
-                            {item.companyName}
-                        </div>)
-                    }
+                    <div>Company list :
+                        {
+                            item.companyCollection.items.map((item) => <Link href={`/company/${item.sys.id}`} key={item.companyName}>
+                                {item.companyName}
+                            </Link>)
+                        }
+                    </div>
                     <hr />
                 </div>
             )
