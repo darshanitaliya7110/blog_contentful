@@ -54,7 +54,6 @@ const BlogList = () => {
         getData()
     }, [getData])
 
-    console.log(blogData)
 
 
     return (
