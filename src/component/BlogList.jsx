@@ -8,6 +8,11 @@ const BlogList = () => {
 
     const [blogData, setBlogData] = useState(null)
 
+    const formatDate = (dateString) => {
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        return new Date(dateString).toLocaleDateString(undefined, options);
+    };
+
     const query = `{
                         blogCollection {
                             items {
@@ -61,7 +66,7 @@ const BlogList = () => {
                     <div>{documentToReactComponents(item.body.json)}</div>
                     <span><p><img style={{ width: "30px", height: "30px" }} src={item.author.authorImage.url} alt={item.author.authorName} /> {item.author.authorName}</p></span>
                     <br />
-                    <p>{item.date}</p>
+                    <p>{formatDate(item.date)}</p>
                 </div>
             )}
         </div>
