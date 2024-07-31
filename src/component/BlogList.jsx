@@ -3,7 +3,6 @@
 import axios from 'axios';
 import { documentToReactComponents } from '@contentful/rich-text-react-renderer';
 import React, { useCallback, useEffect, useState } from 'react'
-import { redirect } from 'next/navigation';
 import Link from 'next/link';
 
 const BlogList = () => {

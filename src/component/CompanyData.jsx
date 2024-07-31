@@ -7,14 +7,15 @@ import { useCallback, useEffect, useState } from 'react';
 
 const CompanyData = () => {
 
-    const [companyData, setCompanyData] = useState(null)
     const params = useParams();
-    console.log(params.slug)
+    const [companyData, setCompanyData] = useState(null)
+    const [companyId, setCompanyId] = useState(null)
 
     const query = `{
-        company(id: "${params.slug}") {
-            companyName
-            company
+            company(id: "${companyId}") {
+                companyName
+                company
+            }
         }`
 
     const getData = useCallback(async () => {
@@ -28,18 +29,21 @@ const CompanyData = () => {
                 }
             }
         )
-        setCompanyData(tempData.data.company)
+        setCompanyData(tempData.data.data)
     }, [query])
 
     useEffect(() => {
+        setCompanyId(params.slug)
         getData()
-    }, [getData])
+    }, [getData, params.slug])
 
-    console.log(companyData)
 
     return (
         <div>
-            <h1>{companyData?.companyName}</h1>
+            <h1>{companyData?.company?.companyName}</h1>
+            {
+                companyData?.company?.company.map((item, i) => <p key={i}>{item}</p>)
+            }
         </div>
     )
 }
