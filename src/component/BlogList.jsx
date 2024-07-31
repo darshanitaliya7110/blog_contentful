@@ -1,69 +1,24 @@
 "use client"
 
-import axios from 'axios';
 import { documentToReactComponents } from '@contentful/rich-text-react-renderer';
-import React, { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-const BlogList = () => {
+const BlogList = ({ blogData }) => {
 
-    const [blogData, setBlogData] = useState(null)
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => {
+        setHydrated(true);
+    }, []);
+    if (!hydrated) {
+        return null;
+    }
 
     const formatDate = (dateString) => {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
-    const query = `{
-                        blogCollection {
-                            items {
-                            _id
-                            title
-                            verified
-                            description
-                            date
-                            image{
-                                title
-                                url
-                            }
-                            body{
-                                json
-                            }
-                            author{
-                                authorName
-                                authorImage{
-                                url
-                                }
-                            }
-                            companyCollection{
-                                items{
-                                sys{
-                                id
-                                }
-                                companyName
-                                }
-                            }
-                            }
-                        }
-                    }`;
-
-    const getData = useCallback(async () => {
-        const tempData = await axios.post(
-            `https://graphql.contentful.com/content/v1/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}`,
-            { query },
-            {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_ACCESS_TOKEN}`
-                }
-            }
-        )
-        setBlogData(tempData.data.data.blogCollection.items)
-    }, [query])
-
-    useEffect(() => {
-        getData()
-    }, [getData])
 
 
     return (
