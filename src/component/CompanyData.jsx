@@ -9,10 +9,9 @@ const CompanyData = () => {
 
     const params = useParams();
     const [companyData, setCompanyData] = useState(null)
-    const [companyId, setCompanyId] = useState(null)
 
     const query = `{
-            company(id: "${companyId}") {
+            company(id: "${params.slug}") {
                 companyName
                 company
             }
@@ -33,9 +32,8 @@ const CompanyData = () => {
     }, [query])
 
     useEffect(() => {
-        setCompanyId(params.slug)
         getData()
-    }, [getData, params.slug])
+    }, [getData])
 
 
     return (
