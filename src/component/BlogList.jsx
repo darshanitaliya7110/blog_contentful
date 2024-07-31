@@ -11,9 +11,24 @@ const BlogList = ({ blogData }) => {
     useEffect(() => {
         setHydrated(true);
     }, []);
+
+    useEffect(() => {
+        if (hydrated) {
+            const hash = window.location.hash;
+            if (hash) {
+                const element = document.querySelector(hash);
+                if (element) {
+                    element.scrollIntoView();
+                }
+            }
+        }
+    }, [hydrated]);
+
     if (!hydrated) {
         return null;
     }
+
+
 
     const formatDate = (dateString) => {
         const options = { year: 'numeric', month: 'long', day: 'numeric' };
