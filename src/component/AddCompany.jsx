@@ -1,7 +1,7 @@
 "use client"
 
 import axios from 'axios';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 
 
@@ -10,6 +10,21 @@ const AddCompany = () => {
     const [companyName, setCompanyName] = useState('');
     const [companyDetails, setCompanyDetails] = useState([]);
     const [inputValue, setInputValue] = useState('');
+    const [companyList, setCompanyList] = useState()
+
+    const getData = async () => {
+        const companyData = await axios.get("https://cdn.contentful.com/spaces/sag2zffdzoog/environments/master/entries?access_token=LWHqjbuG8vxkdRuuOQW-69kBB_4UTa8Ly5Q1NdjGuho&content_type=company", {
+            headers: {
+                Authorization: `Bearer ${process.env.SPACE_ID}`
+            }
+        })
+
+        setCompanyList(companyData.data.items)
+    }
+
+    useEffect(() => {
+        getData()
+    }, [companyList])
 
     const handleCompanyNameChange = (e) => {
         setCompanyName(e.target.value);
@@ -75,6 +90,7 @@ const AddCompany = () => {
                 contentType: content_type_id,
             });
 
+            getData()
 
         } catch (error) {
             console.error("Error adding entry to Contentful:", error);
@@ -117,41 +133,49 @@ const AddCompany = () => {
 
 
     return (
-        <div className="form-container">
-            <div>
-                <label htmlFor="companyName">Company name </label>
-                <br />
-                <input
-                    id="companyName"
-                    type="text"
-                    value={companyName}
-                    onChange={handleCompanyNameChange}
-                    required
-                />
+        <>
+            <div className="form-container">
+                <div>
+                    <label htmlFor="companyName">Company name </label>
+                    <br />
+                    <input
+                        id="companyName"
+                        type="text"
+                        value={companyName}
+                        onChange={handleCompanyNameChange}
+                        required
+                    />
+                </div>
+                <div>
+                    <label htmlFor="companyDetails">Company </label>
+                    <br />
+                    <input
+                        id="companyDetails"
+                        type="text"
+                        value={inputValue}
+                        onChange={handleInputChange}
+                        onKeyPress={handleAddDetail}
+                        placeholder="Type the value and hit enter"
+                        required
+                    />
+                </div>
+                <div className="chip-container">
+                    {companyDetails.map((detail, index) => (
+                        <div key={index} className="chip">
+                            {detail}
+                            <button onClick={() => handleRemoveDetail(index)}>x</button>
+                        </div>
+                    ))}
+                </div>
+                <button onClick={() => handleSubmit()}>Submit</button>
             </div>
-            <div>
-                <label htmlFor="companyDetails">Company </label>
-                <br />
-                <input
-                    id="companyDetails"
-                    type="text"
-                    value={inputValue}
-                    onChange={handleInputChange}
-                    onKeyPress={handleAddDetail}
-                    placeholder="Type the value and hit enter"
-                    required
-                />
-            </div>
-            <div className="chip-container">
-                {companyDetails.map((detail, index) => (
-                    <div key={index} className="chip">
-                        {detail}
-                        <button onClick={() => handleRemoveDetail(index)}>x</button>
-                    </div>
-                ))}
-            </div>
-            <button onClick={() => handleSubmit()}>Submit</button>
-        </div>
+            {companyList?.length > 0 && <div>
+
+                <ul>
+                    {companyList.map((item) => <li key={item.sys.id}>{item.fields.companyName}</li>)}
+                </ul>
+            </div>}
+        </>
     )
 }
 
