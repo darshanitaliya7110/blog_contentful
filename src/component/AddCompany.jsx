@@ -13,6 +13,10 @@ const AddCompany = () => {
     const [companyList, setCompanyList] = useState()
     const [imageFile, setImageFile] = useState(null);
     const [loading, setLoading] = useState(false)
+    const [date, setDate] = useState('');
+    const [register, setRegister] = useState(false);
+    const [employee, setEmployee] = useState('');
+
     const getData = useCallback(async () => {
         const companyData = await axios.get("https://cdn.contentful.com/spaces/sag2zffdzoog/environments/master/entries?access_token=LWHqjbuG8vxkdRuuOQW-69kBB_4UTa8Ly5Q1NdjGuho&content_type=company", {
             headers: {
@@ -43,6 +47,18 @@ const AddCompany = () => {
     };
     const handleImageChange = async (e) => {
         setImageFile(e.target.files[0]);
+    };
+
+    const handleDateChange = (e) => {
+        setDate(e.target.value);
+    };
+
+    const handleRegisterChange = (e) => {
+        setRegister(e.target.checked);
+    };
+
+    const handleEmployeeChange = (e) => {
+        setEmployee(e.target.value);
     };
 
     const addImage = async () => {
@@ -143,6 +159,9 @@ const AddCompany = () => {
                             },
                         },
                     }),
+                    date: { "en-US": date },
+                    register: { "en-US": register },
+                    employee: { "en-US": parseInt(employee) },
                 },
                 content_type_id: content_type_id,
                 publish: true,
@@ -184,6 +203,9 @@ const AddCompany = () => {
         setCompanyDetails([])
         setImageFile(null)
         setLoading(false)
+        setDate("");
+        setRegister(false);
+        setEmployee("");
     }
 
 
@@ -278,8 +300,8 @@ const AddCompany = () => {
         <>{loading ? <p>Loading...</p> : <>
             <div className="form-container">
                 <div>
-                    <label htmlFor="companyName">Company name </label>
-                    <br />
+                    <label htmlFor="companyName">Company name :</label>
+
                     <input
                         id="companyName"
                         type="text"
@@ -288,9 +310,10 @@ const AddCompany = () => {
                         required
                     />
                 </div>
+                <br />
                 <div>
-                    <label htmlFor="companyDetails">Company </label>
-                    <br />
+                    <label htmlFor="companyDetails">Company :</label>
+
                     <input
                         id="companyDetails"
                         type="text"
@@ -301,7 +324,6 @@ const AddCompany = () => {
                         required
                     />
                 </div>
-
                 <div className="chip-container">
                     {companyDetails.map((detail, index) => (
                         <div key={index} className="chip">
@@ -310,9 +332,41 @@ const AddCompany = () => {
                         </div>
                     ))}
                 </div>
+                <br />
                 <div>
-                    <label htmlFor="imageFile">Image</label>
-                    <br />
+                    <label htmlFor="date">Date :</label>
+                    <input
+                        id="date"
+                        type="date"
+                        value={date}
+                        onChange={handleDateChange}
+                        required
+                    />
+                </div>
+                <br />
+                <div>
+                    <label htmlFor="register">Register :</label>
+                    <input
+                        id="register"
+                        type="checkbox"
+                        checked={register}
+                        onChange={handleRegisterChange}
+                    />
+                </div>
+                <br />
+                <div>
+                    <label htmlFor="employee">Employee :</label>
+                    <input
+                        id="employee"
+                        type="number"
+                        value={employee}
+                        onChange={handleEmployeeChange}
+                        required
+                    />
+                </div>
+                <br />
+                <div>
+                    <label htmlFor="imageFile">Image :</label>
                     <input
                         id="imageFile"
                         type="file"
@@ -320,8 +374,8 @@ const AddCompany = () => {
                         accept="image/*"
                     />
                 </div>
+                <br />
                 <button onClick={() => handleSubmit()}>Submit</button>
-                {/* <button onClick={() => addImage()}>Addimage</button> */}
             </div>
             {companyList?.length > 0 && <div>
 
