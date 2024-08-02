@@ -12,8 +12,6 @@ const AddCompany = () => {
     const [inputValue, setInputValue] = useState('');
     const [companyList, setCompanyList] = useState()
     const [imageFile, setImageFile] = useState(null);
-    const [imageId, setImageId] = useState('');
-
     const getData = useCallback(async () => {
         const companyData = await axios.get("https://cdn.contentful.com/spaces/sag2zffdzoog/environments/master/entries?access_token=LWHqjbuG8vxkdRuuOQW-69kBB_4UTa8Ly5Q1NdjGuho&content_type=company", {
             headers: {
@@ -120,11 +118,10 @@ const AddCompany = () => {
 
         try {
             // Add review to Contentful
+            let tempImageId = ""
             if (imageFile) {
                 if (imageFile) {
-                    const temp = await addImage(imageFile);
-                    console.log("temp:::::::::", temp)
-                    setImageId(temp)
+                    tempImageId = await addImage(imageFile);
                 }
             }
 
@@ -133,13 +130,13 @@ const AddCompany = () => {
                 fields: {
                     companyName: { "en-US": companyName },
                     company: { "en-US": companyDetails },
-                    ...(imageId && {
+                    ...(tempImageId.length > 0 && {
                         image: {
                             "en-US": {
                                 sys: {
                                     type: "Link",
                                     linkType: "Asset",
-                                    id: imageId,
+                                    id: tempImageId,
                                 },
                             },
                         },
@@ -298,6 +295,15 @@ const AddCompany = () => {
                         required
                     />
                 </div>
+
+                <div className="chip-container">
+                    {companyDetails.map((detail, index) => (
+                        <div key={index} className="chip">
+                            {detail}
+                            <button onClick={() => handleRemoveDetail(index)}>x</button>
+                        </div>
+                    ))}
+                </div>
                 <div>
                     <label htmlFor="imageFile">Image</label>
                     <br />
@@ -307,14 +313,6 @@ const AddCompany = () => {
                         onChange={handleImageChange}
                         accept="image/*"
                     />
-                </div>
-                <div className="chip-container">
-                    {companyDetails.map((detail, index) => (
-                        <div key={index} className="chip">
-                            {detail}
-                            <button onClick={() => handleRemoveDetail(index)}>x</button>
-                        </div>
-                    ))}
                 </div>
                 <button onClick={() => handleSubmit()}>Submit</button>
                 {/* <button onClick={() => addImage()}>Addimage</button> */}
