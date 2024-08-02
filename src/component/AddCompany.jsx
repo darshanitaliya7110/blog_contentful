@@ -1,7 +1,7 @@
 "use client"
 
 import axios from 'axios';
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 
 
@@ -11,8 +11,10 @@ const AddCompany = () => {
     const [companyDetails, setCompanyDetails] = useState([]);
     const [inputValue, setInputValue] = useState('');
     const [companyList, setCompanyList] = useState()
+    const [imageFile, setImageFile] = useState(null);
+    const [imageId, setImageId] = useState('');
 
-    const getData = async () => {
+    const getData = useCallback(async () => {
         const companyData = await axios.get("https://cdn.contentful.com/spaces/sag2zffdzoog/environments/master/entries?access_token=LWHqjbuG8vxkdRuuOQW-69kBB_4UTa8Ly5Q1NdjGuho&content_type=company", {
             headers: {
                 Authorization: `Bearer ${process.env.SPACE_ID}`
@@ -20,11 +22,11 @@ const AddCompany = () => {
         })
 
         setCompanyList(companyData.data.items)
-    }
+    }, [])
 
     useEffect(() => {
         getData()
-    }, [companyList])
+    }, [getData])
 
     const handleCompanyNameChange = (e) => {
         setCompanyName(e.target.value);
@@ -40,6 +42,71 @@ const AddCompany = () => {
             setInputValue('');
         }
     };
+    const handleImageChange = async (e) => {
+        setImageFile(e.target.files[0]);
+    };
+
+    const addImage = async () => {
+        try {
+            // Upload the file as binary to get an upload URL
+            const uploadResponse = await axios.post(
+                `https://upload.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/uploads`,
+                imageFile,
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/octet-stream',
+                    },
+                }
+            );
+
+
+            const uploadUrl = uploadResponse.data.sys.id;
+
+            // Create the asset with the upload URL
+            const assetData = {
+                fields: {
+                    title: {
+                        "en-US": imageFile.name
+                    },
+                    file: {
+                        "en-US": {
+                            "contentType": imageFile.type,
+                            "fileName": imageFile.name,
+                            "uploadFrom": {
+                                "sys": {
+                                    "type": "Link",
+                                    "linkType": "Upload",
+                                    "id": uploadUrl
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            const assetResponse = await axios.post(
+                `https://api.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/environments/master/assets`,
+                assetData,
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                        'Content-Type': 'application/vnd.contentful.management.v1+json',
+                    },
+                }
+            );
+
+            const assetId = assetResponse.data.sys.id;
+
+            // Process and publish the asset
+            await processAndPublishAsset(assetId);
+
+            return assetId;
+
+        } catch (error) {
+            console.error("Error uploading image to Contentful:", error);
+        }
+    }
 
     const handleRemoveDetail = (index) => {
         const newDetails = companyDetails.filter((_, i) => i !== index);
@@ -47,20 +114,36 @@ const AddCompany = () => {
     };
 
     const handleSubmit = async () => {
-        if (companyName.trim() === 0) {
+        if (companyName.trim() === 0 || companyDetails.length === 0) {
             return
         }
-        if (companyDetails.length === 0) {
-            return
-        }
-
 
         try {
             // Add review to Contentful
+            if (imageFile) {
+                if (imageFile) {
+                    const temp = await addImage(imageFile);
+                    console.log("temp:::::::::", temp)
+                    setImageId(temp)
+                }
+            }
+
+
             const reviewData = {
                 fields: {
                     companyName: { "en-US": companyName },
-                    company: { "en-US": companyDetails }
+                    company: { "en-US": companyDetails },
+                    ...(imageId && {
+                        image: {
+                            "en-US": {
+                                sys: {
+                                    type: "Link",
+                                    linkType: "Asset",
+                                    id: imageId,
+                                },
+                            },
+                        },
+                    }),
                 },
                 content_type_id: content_type_id,
                 publish: true,
@@ -130,6 +213,62 @@ const AddCompany = () => {
         }
     }
 
+    const processAndPublishAsset = async (assetId) => {
+        try {
+            // Process the asset
+            await axios.put(
+                `https://api.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/environments/master/assets/${assetId}/files/en-US/process`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                    },
+                }
+            );
+
+            // Wait for the asset to be processed
+            let assetProcessed = false;
+            while (!assetProcessed) {
+                const asset = await axios.get(
+                    `https://api.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/environments/master/assets/${assetId}`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                        },
+                    }
+                );
+
+                assetProcessed = asset.data.fields.file['en-US'].url !== undefined;
+            }
+
+            // Get the latest version of the asset
+            const asset = await axios.get(
+                `https://api.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/environments/master/assets/${assetId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                    },
+                }
+            );
+
+            const assetVersion = asset.data.sys.version;
+
+            // Publish the asset
+            await axios.put(
+                `https://api.contentful.com/spaces/${process.env.NEXT_PUBLIC_SPACE_ID}/environments/master/assets/${assetId}/published`,
+                {},
+                {
+                    headers: {
+                        Authorization: `Bearer ${process.env.NEXT_PUBLIC_MANAGMENT_ACCESS_TOKEN}`,
+                        'X-Contentful-Version': assetVersion,
+                    },
+                }
+            );
+
+        } catch (error) {
+            console.error("Error processing and publishing asset:", error);
+        }
+    };
 
 
     return (
@@ -159,6 +298,16 @@ const AddCompany = () => {
                         required
                     />
                 </div>
+                <div>
+                    <label htmlFor="imageFile">Image</label>
+                    <br />
+                    <input
+                        id="imageFile"
+                        type="file"
+                        onChange={handleImageChange}
+                        accept="image/*"
+                    />
+                </div>
                 <div className="chip-container">
                     {companyDetails.map((detail, index) => (
                         <div key={index} className="chip">
@@ -168,6 +317,7 @@ const AddCompany = () => {
                     ))}
                 </div>
                 <button onClick={() => handleSubmit()}>Submit</button>
+                {/* <button onClick={() => addImage()}>Addimage</button> */}
             </div>
             {companyList?.length > 0 && <div>
 
