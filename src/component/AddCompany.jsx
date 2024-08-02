@@ -12,6 +12,7 @@ const AddCompany = () => {
     const [inputValue, setInputValue] = useState('');
     const [companyList, setCompanyList] = useState()
     const [imageFile, setImageFile] = useState(null);
+    const [loading, setLoading] = useState(false)
     const getData = useCallback(async () => {
         const companyData = await axios.get("https://cdn.contentful.com/spaces/sag2zffdzoog/environments/master/entries?access_token=LWHqjbuG8vxkdRuuOQW-69kBB_4UTa8Ly5Q1NdjGuho&content_type=company", {
             headers: {
@@ -116,6 +117,7 @@ const AddCompany = () => {
             return
         }
 
+        setLoading(true)
         try {
             // Add review to Contentful
             let tempImageId = ""
@@ -170,7 +172,9 @@ const AddCompany = () => {
                 contentType: content_type_id,
             });
 
-            getData()
+            await getData()
+
+            setLoading(false)
 
         } catch (error) {
             console.error("Error adding entry to Contentful:", error);
@@ -178,6 +182,8 @@ const AddCompany = () => {
 
         setCompanyName("")
         setCompanyDetails([])
+        setImageFile(null)
+        setLoading(false)
     }
 
 
@@ -269,7 +275,7 @@ const AddCompany = () => {
 
 
     return (
-        <>
+        <>{loading ? <p>Loading...</p> : <>
             <div className="form-container">
                 <div>
                     <label htmlFor="companyName">Company name </label>
@@ -323,6 +329,8 @@ const AddCompany = () => {
                     {companyList.map((item) => <li key={item.sys.id}>{item.fields.companyName}</li>)}
                 </ul>
             </div>}
+        </>
+        }
         </>
     )
 }
